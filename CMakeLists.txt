@@ -20,6 +20,9 @@ endif()
 # Check for Pulse (any OS)
 pkg_check_modules(pulse libpulse-simple)
 
+# Check for Pipewire (any OS)
+pkg_check_modules(pipewire libpipewire-0.3)
+
 # Check for known non-Linux unix-likes
 if (CMAKE_SYSTEM_NAME MATCHES "kNetBSD.*|NetBSD.*")
   message(STATUS "NetBSD detected, using OSS")
@@ -56,6 +59,7 @@ option(RTAUDIO_API_ALSA "Build ALSA API" ${LINUX})
 option(RTAUDIO_API_PULSE "Build PulseAudio API" ${pulse_FOUND})
 option(RTAUDIO_API_JACK "Build JACK audio server API" ${HAVE_JACK})
 option(RTAUDIO_API_CORE "Build CoreAudio API" ${APPLE})
+option(RTAUDIO_API_PIPEWIRE "Build PipeWire API" ${pipewire_FOUND})
 
 # Check for functions
 include(CheckFunctionExists)
@@ -104,6 +108,19 @@ set(API_DEFS)
 set(API_LIST)
 
 # Tweak API-specific configuration.
+
+# PipeWire
+if (RTAUDIO_API_PIPEWIRE)
+  if (NOT pipewire_FOUND)
+    message(FATAL_ERROR "PipeWire API requested but no PipeWire dev libraries found")
+  endif()
+
+  list(APPEND INCDIRS ${pipewire_INCLUDE_DIRS})
+  list(APPEND LINKLIBS ${pipewire_LIBRARIES})
+  list(APPEND PKGCONFIG_REQUIRES "pipewire-0.3")
+  list(APPEND API_DEFS "-D__LINUX_PIPEWIRE__")
+  list(APPEND API_LIST "pipewire")
+endif()
 
 # Jack
 if (RTAUDIO_API_JACK AND jack_FOUND)
